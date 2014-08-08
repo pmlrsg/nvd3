@@ -125,10 +125,13 @@ nv.addGraph(function() {
 
     chart.y4Axis
         .tickFormat(function(d) { return '$' + d3.format(',.2f')(d) });
-        
-  //  chart.bars.forceY([0]);
- //   chart.bars2.forceY([0]);
-    //chart.lines.forceY([0]);
+   
+   // Tells the chart to hide the contextChart     
+    chart.contextChart(false);
+   
+   //Tells the chart to expand the main chart so it fills all the space 
+    chart.contextChartSpacing(false);
+ 
     nv.log(testdata);
     d3.select('#chart1 svg')
         .datum(testdata)

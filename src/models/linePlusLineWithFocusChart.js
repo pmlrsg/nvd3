@@ -43,7 +43,9 @@ nv.models.linePlusLineWithFocusChart = function() {
     , y4
     , noData = "No Data Available."
     , dispatch = d3.dispatch('tooltipShow', 'tooltipHide', 'brush')
-    , transitionDuration = 0
+    , transitionDuration = 0,
+    contextChart = true,
+    contextChartSpacing = true
     ;
 
   lines2
@@ -101,13 +103,16 @@ nv.models.linePlusLineWithFocusChart = function() {
     selection.each(function(data) {
       var container = d3.select(this),
           that = this;
-
+	
       var availableWidth = (width  || parseInt(container.style('width')) || 960)
-                             - margin.left - margin.right,
-          availableHeight1 = (height || parseInt(container.style('height')) || 400)
-                             - margin.top - margin.bottom - height2,
-          availableHeight2 = height2 - margin2.top - margin2.bottom;
+                             - margin.left - margin.right;
+      
+      if( ! contextChartSpacing )
+	  		height2 = 0;
+      var availableHeight1 = (height || parseInt(container.style('height')) || 400)  - margin.top - margin.bottom - height2;
+      var availableHeight2 = height2 - margin2.top - margin2.bottom;
 
+	  
       chart.update = function() { container.transition().duration(transitionDuration).call(chart); };
       chart.container = this;
 
@@ -198,8 +203,10 @@ nv.models.linePlusLineWithFocusChart = function() {
       contextEnter.append('g').attr('class', 'nv-linesWrap');
       contextEnter.append('g').attr('class', 'nv-brushBackground');
       contextEnter.append('g').attr('class', 'nv-x nv-brush');
-
-
+	  
+	  if( ! contextChart )
+	  	contextEnter.remove(); //attr('opacity', 0);
+	  	
       //------------------------------------------------------------
 
 
@@ -649,6 +656,20 @@ nv.models.linePlusLineWithFocusChart = function() {
     brushExtent = _;
     return chart;
   };
+
+  chart.contextChart = function(_) {
+    if (!arguments.length) return contextChart;
+    contextChart = _;
+    return chart;
+  };
+
+  chart.contextChartSpacing = function(_) {
+    if (!arguments.length) return contextChartSpacing;
+    contextChartSpacing = _;
+    return chart;
+  };
+
+
 
 
   //============================================================
