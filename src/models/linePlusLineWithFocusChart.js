@@ -147,6 +147,12 @@ nv.models.linePlusLineWithFocusChart = function() {
       var dataY1 = data.filter(function(d) { return !d.disabled && d.yAxis == 1 });
       var dataY2 = data.filter(function(d) { return d.yAxis == 2 }); // removed the !d.disabled clause here to fix Issue #240
 
+	  if( dataY1.length == 0 )
+         dataY1 = [ { disabled: true, values:[] } ];
+         
+	  if( dataY2.length == 0 )
+         dataY2 = [ { disabled: true, values:[] } ];
+	  
       x = lines1.xScale();
       x2 = x2Axis.scale();
       y1 = lines1.yScale();
@@ -437,7 +443,7 @@ nv.models.linePlusLineWithFocusChart = function() {
                   return {
                     key: d.key,
                     values: d.values.filter(function(d,i) {
-                      return lines1.x()(d,i) >= extent[0] && lines2.x()(d,i) <= extent[1];
+                      return lines1.x()(d,i) >= extent[0] && lines1.x()(d,i) <= extent[1];
                     })
                   }
                 })
@@ -450,7 +456,7 @@ nv.models.linePlusLineWithFocusChart = function() {
                   return {
                     key: d.key,
                     values: d.values.filter(function(d,i) {
-                      return lines1.x()(d,i) >= extent[0] && lines1.x()(d,i) <= extent[1];
+                      return lines2.x()(d,i) >= extent[0] && lines2.x()(d,i) <= extent[1];
                     })
                   }
                 })
