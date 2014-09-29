@@ -7748,7 +7748,7 @@ nv.models.linePlusLineWithFocusChart = function() {
       // Setup Scales
 
       var dataY1 = data.filter(function(d) { return !d.disabled && d.yAxis == 1 });
-      var dataY2 = data.filter(function(d) { return d.yAxis == 2 }); // removed the !d.disabled clause here to fix Issue #240
+      var dataY2 = data.filter(function(d) { return !d.disabled && d.yAxis == 2 }); // removed the !d.disabled clause here to fix Issue #240
 
 	  if( dataY1.length == 0 )
          dataY1 = [ { disabled: true, values:[] } ];
@@ -7800,14 +7800,16 @@ nv.models.linePlusLineWithFocusChart = function() {
       var focusEnter = gEnter.append('g').attr('class', 'nv-focus');
       focusEnter.append('g').attr('class', 'nv-x nv-axis');
       focusEnter.append('g').attr('class', 'nv-y1 nv-axis');
-      focusEnter.append('g').attr('class', 'nv-y2 nv-axis');
+      if( series2.length > 0 )
+        focusEnter.append('g').attr('class', 'nv-y2 nv-axis');
       focusEnter.append('g').attr('class', 'nv-barsWrap');
       focusEnter.append('g').attr('class', 'nv-linesWrap');
 
       var contextEnter = gEnter.append('g').attr('class', 'nv-context');
       contextEnter.append('g').attr('class', 'nv-x nv-axis');
       contextEnter.append('g').attr('class', 'nv-y1 nv-axis');
-      contextEnter.append('g').attr('class', 'nv-y2 nv-axis');
+      if( series2.length > 0 )
+        contextEnter.append('g').attr('class', 'nv-y2 nv-axis');
       contextEnter.append('g').attr('class', 'nv-barsWrap');
       contextEnter.append('g').attr('class', 'nv-linesWrap');
       contextEnter.append('g').attr('class', 'nv-brushBackground');
@@ -7870,7 +7872,7 @@ nv.models.linePlusLineWithFocusChart = function() {
           .datum(dataY1.length ? dataY1 : [{values:[]}]);
 
       var lines4Wrap = g.select('.nv-context .nv-linesWrap')
-          .datum(!dataY2[0].disabled ? dataY2 : [{values:[]}]);
+          .datum(dataY2.length ? dataY2 : [{values:[]}]);
           
       g.select('.nv-context')
           .attr('transform', 'translate(0,' + ( availableHeight1 + margin.bottom + margin2.top) + ')')
@@ -8053,7 +8055,7 @@ nv.models.linePlusLineWithFocusChart = function() {
             );
         
         var focusLines2Wrap = g.select('.nv-focus .nv-linesWrap')
-            .datum(dataY2[0].disabled ? [{values:[]}] :
+            .datum(!dataY2.length ? [{values:[]}] :
               dataY2
                 .map(function(d,i) {
                   return {
