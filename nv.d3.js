@@ -7815,6 +7815,14 @@ nv.models.linePlusLineWithFocusChart = function() {
       contextEnter.append('g').attr('class', 'nv-linesWrap');
       contextEnter.append('g').attr('class', 'nv-brushBackground');
       contextEnter.append('g').attr('class', 'nv-x nv-brush');
+
+      if( contextChart )
+        contextEnter
+          .append( 'text' )
+          .text( 'Use the handles bellow to zoom in on the data' )
+          .attr('transform', 'translate(3, -10)')
+          .attr('class', 'nv-context-text');
+
 	  
 	  if( ! contextChart )
 	  	contextEnter.remove(); //attr('opacity', 0);
@@ -7877,6 +7885,8 @@ nv.models.linePlusLineWithFocusChart = function() {
           
       g.select('.nv-context')
           .attr('transform', 'translate(0,' + ( availableHeight1 + margin.bottom + margin2.top) + ')')
+
+
 
       lines3Wrap.transition().call(lines3);
       lines4Wrap.transition().call(lines4);
