@@ -1,4 +1,7 @@
 
+
+
+
 nv.models.linePlusLineWithFocusChart = function() {
   "use strict";
   //============================================================
@@ -72,8 +75,29 @@ nv.models.linePlusLineWithFocusChart = function() {
     .orient('left')
     ;
   y4Axis
+
     .orient('right')
     ;
+
+
+var shrinkToRequiredPoints = function( scaleAmount ){
+
+  return function( series ){
+
+    if(! series.values || series.values.length == 0 ) return series;
+
+    var allowEveryXAmount = series.values.length / ((window.innerWidth - margin.left) - margin.right) ;
+    allowEveryXAmount = Math.ceil(allowEveryXAmount * scaleAmount);
+
+    var currentCounter = 0;
+    return {
+     key: series.key,
+     values: series.values.filter(function(){
+      return (currentCounter++ % allowEveryXAmount) == 0;
+     })
+    };
+  };
+}
 
   //============================================================
 
@@ -273,12 +297,15 @@ nv.models.linePlusLineWithFocusChart = function() {
         .color(data.map(function(d,i) {
           return d.color || color(d, i);
         }).filter(function(d,i) { return !data[i].disabled && data[i].yAxis == 2 }));
-        
+      
+      var smallerDataY1 = dataY1.map( shrinkToRequiredPoints(8) );
+      var smallerDataY2 = dataY2.map( shrinkToRequiredPoints(8) );
+
       var lines3Wrap = g.select('.nv-context .nv-barsWrap')
-          .datum(dataY1.length ? dataY1 : [{values:[]}]);
+          .datum(smallerDataY1);
 
       var lines4Wrap = g.select('.nv-context .nv-linesWrap')
-          .datum(dataY2.length ? dataY2 : [{values:[]}]);
+          .datum(smallerDataY2);
           
       g.select('.nv-context')
           .attr('transform', 'translate(0,' + ( availableHeight1 + margin.bottom + margin2.top) + ')')
@@ -459,7 +486,8 @@ nv.models.linePlusLineWithFocusChart = function() {
                       return lines1.x()(d,i) >= extent[0] && lines1.x()(d,i) <= extent[1];
                     })
                   }
-                })
+                }).map( shrinkToRequiredPoints(4) )
+              
             );
         
         var focusLines2Wrap = g.select('.nv-focus .nv-linesWrap')
@@ -472,7 +500,8 @@ nv.models.linePlusLineWithFocusChart = function() {
                       return lines1.x()(d,i) >= extent[0] && lines1.x()(d,i) <= extent[1];
                     })
                   }
-                })
+                }).map( shrinkToRequiredPoints(4) )
+              
              );
                  
         //------------------------------------------------------------
