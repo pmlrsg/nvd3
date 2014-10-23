@@ -7657,6 +7657,9 @@ nv.models.linePlusLineWithFocusChart = function() {
   lines2
     .clipEdge(true)
     ;
+  lines1
+    .clipEdge(true)
+    ;
   lines4
     .interactive(false)
     ;
@@ -7781,12 +7784,14 @@ var shrinkToRequiredPoints = function( scaleAmount ){
          dataY2 = [ { disabled: true, values:[] } ];
 	  
       x = lines1.xScale();
-      
       x2 = x2Axis.scale();
+
       y1 = lines1.yScale();
       y2 = lines2.yScale();
+
       y3 = lines3.yScale();
       y4 = lines4.yScale();
+
 
       var series1 = data
         .filter(function(d) { return !d.disabled && d.yAxis == 1 })
@@ -7809,6 +7814,10 @@ var shrinkToRequiredPoints = function( scaleAmount ){
       x2  .domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return d.x } ))
           .range([0, availableWidth]);
 
+      lines3.xDomain( x2.domain() );
+      lines3.xRange( x2.range() );
+      lines4.xDomain( x2.domain() );
+      lines4.xRange( x2.range() );
 
       //------------------------------------------------------------
 
@@ -8083,11 +8092,26 @@ var shrinkToRequiredPoints = function( scaleAmount ){
             .datum(!dataY1.length ? [{values:[]}] :
               dataY1
                 .map(function(d,i) {
+
+                  var start = null;
+                  var end = null;
+
+                  // Find the start and end location of the needed variables
+                  for( var i = 0; i < d.values.length; i++ ){
+                    if( lines1.x()( d.values[i], i ) >= extent[0] && start == null )
+                      start = i;
+
+                    if( lines1.x()( d.values[i], i ) <= extent[1]  )
+                      end = i;
+                  }
+
+                  // Add 2 extra points so that our lines go the end
+                  if( start != 0 ) start--;
+                  if( (end + 1) < d.values.length ) end++;
+
                   return {
                     key: d.key,
-                    values: d.values.filter(function(d,i) {
-                      return lines1.x()(d,i) >= extent[0] && lines1.x()(d,i) <= extent[1];
-                    })
+                    values: d.values.slice( start, end + 1 )
                   }
                 }).map( shrinkToRequiredPoints(4) )
               
@@ -8097,11 +8121,27 @@ var shrinkToRequiredPoints = function( scaleAmount ){
             .datum(!dataY2.length ? [{values:[]}] :
               dataY2
                 .map(function(d,i) {
+
+                  var start = null;
+                  var end = null;
+
+                  // Find the start and end location of the needed variables
+                  for( var i = 0; i < d.values.length; i++ ){
+                    if( lines1.x()(d.values[i], i ) >= extent[0] && start == null )
+                      start = i;
+
+                    if( lines1.x()(d.values[i], i ) <= extent[1]  )
+                      end = i;
+                  }
+
+                  // Add 2 extra points so that our lines of the chart
+                  if( start != 0 ) start--;
+                  if( (end + 1) < d.values.length ) end++;
+
+                  // Get our sub array and return the data
                   return {
                     key: d.key,
-                    values: d.values.filter(function(d,i) {
-                      return lines1.x()(d,i) >= extent[0] && lines1.x()(d,i) <= extent[1];
-                    })
+                    values: d.values.slice( start, end + 1 )
                   }
                 }).map( shrinkToRequiredPoints(4) )
               
@@ -8125,6 +8165,12 @@ var shrinkToRequiredPoints = function( scaleAmount ){
         .tickSize(-availableHeight1, 0);
 
         xAxis.domain([Math.ceil(extent[0]), Math.floor(extent[1])]);
+
+
+        lines1.xDomain( x.domain() );
+        lines1.xRange( x.range() );
+        lines2.xDomain( x.domain() );
+        lines2.xRange( x.range() );
         
         g.select('.nv-x.nv-axis').transition().duration(transitionDuration)
           .call(xAxis);
