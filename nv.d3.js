@@ -7648,10 +7648,12 @@ nv.models.linePlusLineWithFocusChart = function() {
     , y3
     , y4
     , noData = "No Data Available."
-    , dispatch = d3.dispatch('tooltipShow', 'tooltipHide', 'brush')
+    , dispatch = d3.dispatch('tooltipShow', 'tooltipHide', 'brush', 'update')
     , transitionDuration = 0,
     contextChart = true,
     contextChartSpacing = true
+    , y1Domain = ['auto', 'auto']
+    , y2Domain = ['auto', 'auto']
     ;
 
   lines2
@@ -7696,13 +7698,48 @@ var shrinkToRequiredPoints = function( scaleAmount ){
     allowEveryXAmount = Math.ceil(allowEveryXAmount * scaleAmount);
 
     var currentCounter = 0;
+    var bump = false;
     return {
-     key: series.key,
-     values: series.values.filter(function(){
-      return (currentCounter++ % allowEveryXAmount) == 0;
+      key: series.key,
+      values: series.values.filter(function( value, index, values ){
+        //never remove the first or last point
+        if( index == 0 || index == values.length -1 )
+          return true;
+
+        //Should this point be removed ?
+        if( (currentCounter++ % allowEveryXAmount) !== 0 ){
+          // Is this point a peak
+          if( value.y > values[index - 1].y && value.y > values[index + 1].y ){
+            currentCounter--;
+            return true;
+          }
+          // Is this point a dip
+          if( value.y < values[index - 1].y && value.y < values[index + 1].y ){
+            currentCounter--;
+            return true;
+          }
+          return false;
+        }
+      return true;
      })
     };
   };
+}
+
+var seriesArrayMinMax = function( seriesArray, valueAttr ){
+  var min = Infinity;
+  var max = -Infinity;
+  for( var i = 0; i < seriesArray.length; i++ ){
+    var series = seriesArray[i];
+    for( var valueId = 0; valueId < series.values.length; valueId++ ){
+      var value = series.values[valueId][valueAttr];
+      if( value < min )
+        min = value;
+      if( value > max )
+        max = value;
+    }
+  }
+  return [ min, max ];
 }
 
   //============================================================
@@ -7742,8 +7779,11 @@ var shrinkToRequiredPoints = function( scaleAmount ){
       var availableHeight1 = (height || parseInt(container.style('height')) || 400)  - margin.top - margin.bottom - height2;
       var availableHeight2 = height2 - margin2.top - margin2.bottom;
 
-	  
-      chart.update = function() { container.transition().duration(transitionDuration).call(chart); };
+	    chart.update = function(){
+         container.transition().duration(transitionDuration).call(chart);
+         dispatch.update();
+      };
+
       chart.container = this;
 
 
@@ -7852,7 +7892,7 @@ var shrinkToRequiredPoints = function( scaleAmount ){
       if( contextChart )
         contextEnter
           .append( 'text' )
-          .text( 'Use the handles bellow to zoom in on the data' )
+          .text( 'Use the handles below to zoom in on the data' )
           .attr('transform', 'translate(3, -10)')
           .attr('class', 'nv-context-text');
 
@@ -8088,65 +8128,39 @@ var shrinkToRequiredPoints = function( scaleAmount ){
           return d.color || color(d, i);
         }).filter(function(d,i) { return !data[i].disabled && data[i].yAxis == 2 }));
 
+        function filterDataInRange(d,i) {
+          var start = null;
+          var end = null;
+
+          // Find the start and end location of the needed variables
+          for( var i = 0; i < d.values.length; i++ ){
+            if( lines1.x()( d.values[i], i ) >= extent[0] && start == null )
+              start = i;
+
+            if( lines1.x()( d.values[i], i ) <= extent[1]  )
+              end = i;
+          }
+
+          // Add 2 extra points so that our lines go the end
+          if( start != 0 ) start--;
+          if( (end + 1) < d.values.length ) end++;
+
+          return {
+            key: d.key,
+            values: d.values.slice( start, end + 1 )
+          }
+        }
+
+        var dataY1InRange = dataY1.map( filterDataInRange ).map( shrinkToRequiredPoints(4) );
+
+        var dataY2InRange = dataY2.map( filterDataInRange ).map( shrinkToRequiredPoints(4) );
+
         var focusLines1Wrap = g.select('.nv-focus .nv-barsWrap')
-            .datum(!dataY1.length ? [{values:[]}] :
-              dataY1
-                .map(function(d,i) {
-
-                  var start = null;
-                  var end = null;
-
-                  // Find the start and end location of the needed variables
-                  for( var i = 0; i < d.values.length; i++ ){
-                    if( lines1.x()( d.values[i], i ) >= extent[0] && start == null )
-                      start = i;
-
-                    if( lines1.x()( d.values[i], i ) <= extent[1]  )
-                      end = i;
-                  }
-
-                  // Add 2 extra points so that our lines go the end
-                  if( start != 0 ) start--;
-                  if( (end + 1) < d.values.length ) end++;
-
-                  return {
-                    key: d.key,
-                    values: d.values.slice( start, end + 1 )
-                  }
-                }).map( shrinkToRequiredPoints(4) )
-              
-            );
+            .datum( dataY1InRange );
         
         var focusLines2Wrap = g.select('.nv-focus .nv-linesWrap')
-            .datum(!dataY2.length ? [{values:[]}] :
-              dataY2
-                .map(function(d,i) {
+            .datum( dataY2InRange );
 
-                  var start = null;
-                  var end = null;
-
-                  // Find the start and end location of the needed variables
-                  for( var i = 0; i < d.values.length; i++ ){
-                    if( lines1.x()(d.values[i], i ) >= extent[0] && start == null )
-                      start = i;
-
-                    if( lines1.x()(d.values[i], i ) <= extent[1]  )
-                      end = i;
-                  }
-
-                  // Add 2 extra points so that our lines of the chart
-                  if( start != 0 ) start--;
-                  if( (end + 1) < d.values.length ) end++;
-
-                  // Get our sub array and return the data
-                  return {
-                    key: d.key,
-                    values: d.values.slice( start, end + 1 )
-                  }
-                }).map( shrinkToRequiredPoints(4) )
-              
-             );
-                 
         //------------------------------------------------------------
         
         
@@ -8178,12 +8192,6 @@ var shrinkToRequiredPoints = function( scaleAmount ){
         
         
         //------------------------------------------------------------
-        // Update Main (Focus) Bars and Lines
-
-        focusLines1Wrap.transition().duration(transitionDuration).call(lines1);
-        focusLines2Wrap.transition().duration(transitionDuration).call(lines2);
-        
-        //------------------------------------------------------------
         
           
         //------------------------------------------------------------
@@ -8192,6 +8200,29 @@ var shrinkToRequiredPoints = function( scaleAmount ){
         g.select('.nv-focus .nv-x.nv-axis')
           .attr('transform', 'translate(0,' + y1.range()[0] + ')');
 
+
+        //Set the domain based on user specified or auto
+        var y1DataDomain = seriesArrayMinMax( dataY1InRange, "y" );
+        var newY1Domain = [
+          typeof y1Domain[0] == 'number' ? y1Domain[0] : y1DataDomain[0],
+          typeof y1Domain[1] == 'number' ? y1Domain[1] : y1DataDomain[1]
+        ];
+        y1.domain( y1Domain );
+
+        //Set the domain based on user specified or auto
+        var y2DataDomain = seriesArrayMinMax( dataY2InRange, "y" );
+        var newY2Domain = [
+          typeof y2Domain[0] == 'number' ? y2Domain[0] : y2DataDomain[0],
+          typeof y2Domain[1] == 'number' ? y2Domain[1] : y2DataDomain[1]
+        ];
+
+        y1.domain( newY1Domain );
+        y2.domain( newY2Domain );
+
+        lines1.yDomain( y1.domain() );
+        //lines1.yRange( y1.range() );
+        lines2.yDomain( y2.domain() );
+        //lines2.yRange( y2.range() );
 
         y1Axis
         .scale(y1)
@@ -8206,6 +8237,14 @@ var shrinkToRequiredPoints = function( scaleAmount ){
         .scale(y2)
         .ticks( availableHeight1 / 36 )
         .tickSize(dataY1.length ? 0 : -availableWidth, 0); // Show the y2 rules only if y1 has none
+
+
+        //------------------------------------------------------------
+        // Update Main (Focus) Bars and Lines
+
+        focusLines1Wrap.transition().duration(transitionDuration).call(lines1);
+        focusLines2Wrap.transition().duration(transitionDuration).call(lines2);
+        
 
         g.select('.nv-focus .nv-y2.nv-axis')
           .style('opacity', dataY2.length ? 1 : 0)
@@ -8278,8 +8317,35 @@ var shrinkToRequiredPoints = function( scaleAmount ){
   //TODO: consider rebinding x, y and some other stuff, and simply do soemthign lile bars.x(lines.x()), etc.
   //d3.rebind(chart, lines, 'x', 'y', 'size', 'xDomain', 'yDomain', 'xRange', 'yRange', 'forceX', 'forceY', 'interactive', 'clipEdge', 'clipVoronoi', 'id');
 
+  d3.rebind(chart, dispatch, "on", "update");
+
   chart.options = nv.utils.optionsFunc.bind(chart);
   
+
+  chart.y1Domain = function(_) {
+    if (!arguments.length) return y1Domain;
+    //Convert any numberish strings to Numbers
+    y1Domain = _.map(function( val ){
+      if( ! isNaN( Number( val ) ) )
+        return Number(val);
+      else
+        return val;
+    });
+    return chart;
+  };
+  
+  chart.y2Domain = function(_) {
+    if (!arguments.length) return y2Domain;
+    //Convert any numberish strings to Numbers
+    y2Domain = _.map(function( val ){
+      if( ! isNaN( Number( val ) ) )
+        return Number(val);
+      else
+        return val;
+    });;
+    return chart;
+  };
+
   chart.x = function(_) {
     if (!arguments.length) return getX;
     getX = _;
