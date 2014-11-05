@@ -136,6 +136,10 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
         max = value;
     }
   }
+
+  if( min == Infinity || max == -Infinity )
+    return [ 0, 1 ];
+
   return [ min, max ];
 }
 
@@ -595,7 +599,7 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
         // Setup and Update Main (Focus) Y Axes
         
         g.select('.nv-focus .nv-x.nv-axis')
-          .attr('transform', 'translate(0,' + y1.range()[0] + ')');
+          .attr('transform', 'translate(0,' + availableHeight1 + ')');
 
 
         //Set the domain based on user specified or auto
