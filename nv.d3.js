@@ -7623,6 +7623,7 @@ nv.models.linePlusLineWithFocusChart = function() {
     , y4Axis = nv.models.axis()
     , legend = nv.models.legend()
     , brush = d3.svg.brush()
+    , title = ""
     ;
 
   var margin = {top: 30, right: 30, bottom: 30, left: 60}
@@ -7873,6 +7874,8 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
       var gEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-wrap nv-linePlusBar').append('g');
       var g = wrap.select('g');
 
+      var titleElement = gEnter.append('text').attr('class', 'nv-title').attr('style','text-anchor=middle; font-size: 20px;');
+
       gEnter.append('g').attr('class', 'nv-legendWrap');
       
       var focusEnter = gEnter.append('g').attr('class', 'nv-focus');
@@ -7909,6 +7912,8 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
 
       //------------------------------------------------------------
       // Legend
+      // 
+      margin.top = 10;
 
       if (showLegend) {
         legend.width( availableWidth / 2 );
@@ -7921,21 +7926,27 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
             }))
           .call(legend);
 
-        if ( margin.top != legend.height()) {
-          margin.top = legend.height();
-          availableHeight1 = (height || parseInt(container.style('height')) || 400)
-                             - margin.top - margin.bottom - height2;
-        }
-
-        g.select('.nv-legendWrap')
-            .attr('transform', 'translate(' + ( availableWidth / 2 ) + ',' + (-margin.top) +')');
+          margin.top += legend.height();
+          var legendOffset = 0;
+      }else{
+        g.select('.nv-legendWrap').datum([]).call(legend);
       }
+
+      if( title != "" ){
+        g.select('.nv-title').attr('transform', 'translate(' + (availableWidth / 2) + ',' + -margin.top + ')').text( title );
+        margin.top += 30;
+        legendOffset = 40;
+      }      
+
+      g.select('.nv-legendWrap')
+          .attr('transform', 'translate(' + ( availableWidth / 2 ) + ',' + (-margin.top + legendOffset) +')');
+
+      availableHeight1 = (height || parseInt(container.style('height')) || 400)
+                         - margin.top - margin.bottom - height2;
 
       //------------------------------------------------------------
 
-
       wrap.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
-
 
       //------------------------------------------------------------
       // Context Components
@@ -8384,6 +8395,13 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
   chart.height = function(_) {
     if (!arguments.length) return height;
     height = _;
+    return chart;
+  };
+
+
+  chart.title = function(_) {
+    if (!arguments.length) return title;
+    title = _;
     return chart;
   };
 
