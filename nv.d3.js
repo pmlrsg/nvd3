@@ -7689,6 +7689,8 @@ nv.models.linePlusLineWithFocusChart = function() {
     ;
 
 
+  legend.key( function( d ){ return d.label; } );
+
 var shrinkToRequiredPoints = function( scaleAmount ){
 
   return function( series ){
@@ -7919,11 +7921,12 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
         legend.width( availableWidth / 2 );
 
         g.select('.nv-legendWrap')
-            .datum(data.map(function(series) {
-              series.originalKey = series.originalKey === undefined ? series.key : series.originalKey;
-              series.key = series.originalKey + (series.yAxis == 1 ? ' (left axis)' : ' (right axis)');
-              return series;
-            }))
+            .datum( series )
+            // .datum(data.map(function(series) {
+            //   series.originalKey = series.originalKey === undefined ? series.key : series.originalKey;
+            //   series.key = series.originalKey + (series.yAxis == 1 ? ' (left axis)' : ' (right axis)');
+            //   return series;
+            // }))
           .call(legend);
 
           margin.top += legend.height();
