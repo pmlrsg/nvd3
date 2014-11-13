@@ -273,7 +273,7 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
       var gEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-wrap nv-linePlusBar').append('g');
       var g = wrap.select('g');
 
-      var titleElement = gEnter.append('text').attr('class', 'nv-title').attr('style','text-anchor=middle; font-size: 20px;');
+      var titleElement = gEnter.append('text').attr('class', 'nv-title').attr('style','text-anchor:middle; font-size: 20px;');
 
       gEnter.append('g').attr('class', 'nv-legendWrap');
       
@@ -295,16 +295,15 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
       contextEnter.append('g').attr('class', 'nv-brushBackground');
       contextEnter.append('g').attr('class', 'nv-x nv-brush');
 
-      if( contextChart )
-        contextEnter
-          .append( 'text' )
-          .text( 'Use the handles below to zoom in on the data' )
-          .attr('transform', 'translate(3, -10)')
-          .attr('class', 'nv-context-text');
+      contextEnter
+        .append( 'text' )
+        .text( 'Use the handles below to zoom in on the data' )
+        .attr('transform', 'translate(3, -10)')
+        .attr('class', 'nv-context-text');
 
 	  
-	  if( ! contextChart )
-	  	contextEnter.remove(); //attr('opacity', 0);
+	  container.selectAll('.nv-context').attr('opacity', contextChart ? 1:0);
+
 	  	
       //------------------------------------------------------------
 
@@ -318,7 +317,7 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
         legend.width( availableWidth / 2 );
 
         g.select('.nv-legendWrap')
-            .datum( series )
+            .datum( data )
             // .datum(data.map(function(series) {
             //   series.originalKey = series.originalKey === undefined ? series.key : series.originalKey;
             //   series.key = series.originalKey + (series.yAxis == 1 ? ' (left axis)' : ' (right axis)');
