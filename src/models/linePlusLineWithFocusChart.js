@@ -60,6 +60,9 @@ nv.models.linePlusLineWithFocusChart = function() {
   lines1
     .clipEdge(true)
     ;
+  lines3
+    .interactive(false)
+    ;
   lines4
     .interactive(false)
     ;
@@ -86,7 +89,7 @@ nv.models.linePlusLineWithFocusChart = function() {
     ;
 
 
-  legend.key( function( d ){ return d.label; } );
+  legend.key( function( d ){ return d.label; } ).showDuplicates(false);
 
 var shrinkToRequiredPoints = function( scaleAmount ){
 
@@ -101,6 +104,7 @@ var shrinkToRequiredPoints = function( scaleAmount ){
     var bump = false;
     return {
       key: series.key,
+      label: series.label,
       values: series.values.filter(function( value, index, values ){
         //never remove the first or last point
         if( index == 0 || index == values.length -1 )
@@ -161,7 +165,7 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
         top = e.pos[1] + ( offsetElement.offsetTop || 0),
         x = xAxis.tickFormat()(lines2.x()(e.point, e.pointIndex)),
         y = (e.series.yAxis == 1 ? y1Axis : y2Axis).tickFormat()(lines2.y()(e.point, e.pointIndex)),
-        content = tooltip(e.series.key, x, y, e, chart);
+        content = tooltip(e.series.label, x, y, e, chart);
 
     nv.tooltip.show([left, top], content, e.value < 0 ? 'n' : 's', null, offsetElement);
   };
@@ -561,6 +565,7 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
 
           return {
             key: d.key,
+            label: d.label,
             values: d.values.slice( start, end + 1 )
           }
         }

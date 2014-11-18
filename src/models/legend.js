@@ -14,6 +14,7 @@ nv.models.legend = function() {
     , updateState = true   //If true, legend will update data.disabled and trigger a 'stateChange' dispatch.
     , radioButtonMode = false   //If true, clicking legend items will cause it to behave like a radio button. (only one can be selected at a time)
     , dispatch = d3.dispatch('legendClick', 'legendDblclick', 'legendMouseover', 'legendMouseout', 'stateChange')
+    , showDuplicates = true
     ;
 
   //============================================================
@@ -28,7 +29,22 @@ nv.models.legend = function() {
       //------------------------------------------------------------
       // Setup containers and skeleton of chart
 
-      var wrap = container.selectAll('g.nv-legend').data([data]);
+      if( showDuplicates )
+        dataToShow = data;
+      else
+        var dataToShow = data.filter(function(){
+          // filter the data to unqiues names only
+          var keys = [];
+          return function( single ){
+            if( keys.indexOf( getKey(single) ) > -1 )
+              return false;
+
+            keys.push( getKey(single) );
+            return true;
+          };
+        }());
+
+      var wrap = container.selectAll('g.nv-legend').data([ dataToShow ]);
       var gEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-legend').append('g');
       var g = wrap.select('g');
 
@@ -57,6 +73,14 @@ nv.models.legend = function() {
                }
                else {
                    d.disabled = !d.disabled;
+
+                   // If we arent showing duplicates then toggle all series
+                   // if the current key
+                   if( ! showDuplicates )
+                     data.forEach(function( single ){
+                      if( getKey(d) == getKey( single ) )
+                        single.disabled = d.disabled;
+                     });
                    if (data.every(function(series) { return series.disabled})) {
                        //the default behavior of NVD3 legends is, if every single series
                        // is disabled, turn all series' back on.
@@ -207,6 +231,12 @@ nv.models.legend = function() {
 
   chart.dispatch = dispatch;
   chart.options = nv.utils.optionsFunc.bind(chart);
+
+  chart.showDuplicates = function(_){
+    if(!arguments.length) return showDuplicates;
+    showDuplicates = _;
+    return this;
+  }
 
   chart.margin = function(_) {
     if (!arguments.length) return margin;
