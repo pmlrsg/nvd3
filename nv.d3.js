@@ -7660,7 +7660,7 @@ nv.models.linePlusLineWithFocusChart = function() {
     , margin2 = {top: 0, right: 30, bottom: 20, left: 60}
     , width = null
     , height = null
-    , height2 = 100
+    , contextChartHeight = 100
     , getX = function(d) { return d.x }
     , getY = function(d) { return d.y }
     , color = nv.utils.defaultColor()
@@ -7681,8 +7681,7 @@ nv.models.linePlusLineWithFocusChart = function() {
     , noData = "No Data Available."
     , dispatch = d3.dispatch('tooltipShow', 'tooltipHide', 'brush', 'update')
     , transitionDuration = 0,
-    contextChart = true,
-    contextChartSpacing = true
+    contextChart = true
     , y1Domain = ['auto', 'auto']
     , y2Domain = ['auto', 'auto']
     ;
@@ -7692,6 +7691,9 @@ nv.models.linePlusLineWithFocusChart = function() {
     ;
   lines1
     .clipEdge(true)
+    ;
+  lines3
+    .interactive(false)
     ;
   lines4
     .interactive(false)
@@ -7812,10 +7814,13 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
       var availableWidth = (width  || parseInt(container.style('width')) || 960)
                              - margin.left - margin.right;
       
-      if( ! contextChartSpacing )
+      var height2;
+      if( ! contextChart )
 	  		height2 = 0;
+      else
+        height2 = contextChartHeight;
       var availableHeight1 = (height || parseInt(container.style('height')) || 400)  - margin.top - margin.bottom - height2;
-      var availableHeight2 = height2 - margin2.top - margin2.bottom;
+      var availableHeight2 = contextChartHeight - margin2.top - margin2.bottom;
 
 	    chart.update = function(){
          container.transition().duration(transitionDuration).call(chart);
@@ -8481,15 +8486,6 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
     contextChart = _;
     return chart;
   };
-
-  chart.contextChartSpacing = function(_) {
-    if (!arguments.length) return contextChartSpacing;
-    contextChartSpacing = _;
-    return chart;
-  };
-
-
-
 
   //============================================================
 
