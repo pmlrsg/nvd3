@@ -615,16 +615,16 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
         }
         
         xAxis
-        .scale(x)
         .ticks( availableWidth / 100 )
         .tickSize(-availableHeight1, 0);
 
         xAxis.domain([Math.ceil(extent[0]), Math.floor(extent[1])]);
 
+        xAxis.range( x.range() )
 
-        lines1.xDomain( x.domain() );
+        lines1.xDomain( xAxis.domain() );
         lines1.xRange( x.range() );
-        lines2.xDomain( x.domain() );
+        lines2.xDomain( xAxis.domain() );
         lines2.xRange( x.range() );
         
         g.select('.nv-x.nv-axis').transition().duration(transitionDuration)
