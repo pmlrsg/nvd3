@@ -20,6 +20,7 @@ nv.models.line = function() {
     , x //can be accessed via chart.xScale()
     , y //can be accessed via chart.yScale()
     , interpolate = "linear" // controls the line interpolation
+    , showErrorBars = true
     ;
 
   scatter
@@ -154,6 +155,28 @@ nv.models.line = function() {
           });
 
 
+      var errorPaths = groups.selectAll('path.nv-errorBar')
+          .data(function(d) { return d.error && showErrorBars ? [d] : [] });
+
+      errorPaths.enter()
+          .append('path')
+          .attr('class', 'nv-errorBar');
+
+      errorPaths.exit()
+           .remove();
+
+      errorPaths.attr('d', function( d ){
+          return d3.svg.area()
+                .interpolate(interpolate)
+                .defined(defined)
+                .x(function(d,i) { return nv.utils.NaNtoZero(x(getX(d,i))); })
+                .y0(function(d,i) { 
+return nv.utils.NaNtoZero(y(getY(d,i) + d.error)); })
+                .y1(function(d,i) { 
+return nv.utils.NaNtoZero(y(getY(d,i) - d.error)) ; })
+                .apply(this, [d.values]);
+      });
+
 
       var linePaths = groups.selectAll('path.nv-line')
           .data(function(d) { return [d.values] });
@@ -173,7 +196,9 @@ nv.models.line = function() {
             d3.svg.line()
               .interpolate(interpolate)
               .defined(defined)
-              .x(function(d,i) { return nv.utils.NaNtoZero(x(getX(d,i))) })
+              .x(function(d,i) { 
+return nv.utils.NaNtoZero(x(getX(d,i)));
+})
               .y(function(d,i) { return nv.utils.NaNtoZero(y(getY(d,i))) })
           );
 
@@ -265,6 +290,12 @@ nv.models.line = function() {
     if (!arguments.length) return isArea;
     isArea = d3.functor(_);
     return chart;
+  };
+
+  chart.showErrorBars = function(_) {
+    if(!arguments.length) return showErrorBars;
+    showErrorBars = _;
+    return false;
   };
 
   //============================================================

@@ -21,6 +21,7 @@ nv.models.linePlusLineWithFocusChart = function() {
     , legend = nv.models.legend()
     , brush = d3.svg.brush()
     , title = ""
+    , showErrorBars = true
     ;
 
   var margin = {top: 30, right: 30, bottom: 30, left: 60}
@@ -101,9 +102,7 @@ var shrinkToRequiredPoints = function( scaleAmount ){
 
     var currentCounter = 0;
     var bump = false;
-    return {
-      key: series.key,
-      label: series.label,
+    var toReturn = {
       values: series.values.filter(function( value, index, values ){
         //never remove the first or last point
         if( index == 0 || index == values.length -1 )
@@ -126,6 +125,13 @@ var shrinkToRequiredPoints = function( scaleAmount ){
       return true;
      })
     };
+
+    for( var i in series ){
+      if( series.hasOwnProperty(i) && toReturn[i] == void(0) )
+        toReturn[i] = series[i];
+    }
+
+    return toReturn;
   };
 }
 
@@ -135,11 +141,21 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
   for( var i = 0; i < seriesArray.length; i++ ){
     var series = seriesArray[i];
     for( var valueId = 0; valueId < series.values.length; valueId++ ){
-      var value = series.values[valueId][valueAttr];
-      if( value < min )
-        min = value;
-      if( value > max )
-        max = value;
+      if( showErrorBars && series.values[valueId].error ){
+        var error = series.values[valueId].error;
+        var value = series.values[valueId][valueAttr];
+        var smallValue = value - error;
+        var largeValue = value + error; 
+      }else{
+        var value = series.values[valueId][valueAttr];
+        var smallValue = value;
+        var largeValue = value;
+      }
+      if( smallValue < min )
+        min = smallValue;
+      if( largeValue > max )
+        max = largeValue;
+
     }
   }
 
@@ -565,11 +581,15 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
           if( start != 0 ) start--;
           if( (end + 1) < d.values.length ) end++;
 
-          return {
-            key: d.key,
-            label: d.label,
+          var toReturn = {
             values: d.values.slice( start, end + 1 )
           }
+
+          for( var i in d ){
+            if( d.hasOwnProperty(i) && toReturn[i] == void(0) )
+              toReturn[i] = d[i];
+          }
+          return toReturn;
         }
 
         var dataY1InRange = dataY1.map( filterDataInRange ).map( shrinkToRequiredPoints(4) );
@@ -780,6 +800,16 @@ var seriesArrayMinMax = function( seriesArray, valueAttr ){
     getY = _;
     lines1.y(_);
     lines2.y(_);
+    return chart;
+  };
+
+  chart.showErrorBars = function(_) {
+    if (!arguments.length) return showErrorBars;
+    showErrorBars = _;
+    lines1.showErrorBars(_);
+    lines2.showErrorBars(_);
+    lines3.showErrorBars(_);
+    lines4.showErrorBars(_);
     return chart;
   };
 
