@@ -12056,7 +12056,7 @@ nv.models.scatter = function() {
             d3.merge(
               data.map(function(d) {
                 return d.values.map(function(d,i) {
-                  return { x: getX(d,i), y: getY(d,i), size: getSize(d,i) }
+                  return { x: getX(d,i), y: getY(d,i), size: getSize(d,i), error: (d.error?d.error:false) }
                 })
               })
             );
@@ -12069,7 +12069,12 @@ nv.models.scatter = function() {
       else
         x.range(xRange || [0, availableWidth]);
 
-      y   .domain(yDomain || d3.extent(seriesData.map(function(d) { return d.y }).concat(forceY)))
+      y   .domain(yDomain || d3.extent([].concat.apply([],seriesData.map(function(d) { 
+        if( d.error )
+          return [d.y + d.error, d.y - d.error];
+        else
+          return [d.y];
+      })).concat(forceY)))
           .range(yRange || [availableHeight, 0]);
 
       z   .domain(sizeDomain || d3.extent(seriesData.map(function(d) { return d.size }).concat(forceSize)))
